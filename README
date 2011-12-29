@@ -1,0 +1,1 @@
+Hive's user defined functions allow the language to be extensible. These UDF's do things like Map Side joins and handling deletes.

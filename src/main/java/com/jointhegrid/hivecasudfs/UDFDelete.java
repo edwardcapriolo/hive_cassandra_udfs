@@ -15,6 +15,7 @@ limitations under the License.
 */
 package com.jointhegrid.hivecasudfs;
 
+import java.nio.ByteBuffer;
 import me.prettyprint.cassandra.serializers.*;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
@@ -24,6 +25,9 @@ import me.prettyprint.cassandra.utils.StringUtils;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.factory.HFactory;
+import org.apache.cassandra.config.CFMetaData;
+import org.apache.cassandra.thrift.ColumnPath;
+import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
@@ -49,6 +53,8 @@ public class UDFDelete extends GenericUDF {
   String column;
 
   public UDFDelete() {
+    CFMetaData m;
+    //m.c
   }
 
   @Override
@@ -88,11 +94,21 @@ public class UDFDelete extends GenericUDF {
     }
     //maybe try n times then throw exception? hector?
     if (column != null) {
-      cfu = cft.createUpdater(this.rowKey.getBytes());
+      //cfu = cft.createUpdater(this.rowKey.getBytes());
       cfu.deleteColumn(column.getBytes());
       return 0;
     } else {
-      cft.deleteRow(this.rowKey.getBytes());
+      try {
+      //cft.deleteRow(this.rowKey.getBytes());
+      ConnWrapper cw = new ConnWrapper("locahost",9154);
+      ColumnPath cp = new ColumnPath();
+      cp.setColumn_family(this.columnFamily);
+      cw.getClient().remove(ByteBuffer.wrap(this.rowKey.getBytes()), null, System.nanoTime(), ConsistencyLevel.ONE);
+      } catch (Exception ex){
+        System.out.println("outtttttttttttttttttttttttttttttttttttttttttttttt");
+        System.out.println(ex);
+        ex.printStackTrace(System.out);
+      }
       return 0;
     }
     

@@ -111,21 +111,31 @@ public class UDFDeleteTest extends HiveTestService {
     jarFile =com.jointhegrid.hivecasudfs.UDFDelete.class
             .getProtectionDomain().getCodeSource().getLocation().getFile();
     client.execute("add jar "+jarFile);
+    
     jarFile=me.prettyprint.hector.api.Serializer.class
             .getProtectionDomain().getCodeSource().getLocation().getFile();
     client.execute("add jar "+jarFile);
-    jarFile=org.apache.cassandra.thrift.InvalidRequestException.class
-            .getProtectionDomain().getCodeSource().getLocation().getFile();
+    
+    //jarFile=org.apache.cassandra.thrift.InvalidRequestException.class
+      //      .getProtectionDomain().getCodeSource().getLocation().getFile();
+    jarFile="/home/edward/.m2/repository/org/apache/cassandra/cassandra-thrift/1.0.6/cassandra-thrift-1.0.6.jar";
     client.execute("add jar "+jarFile);
+    
     jarFile=com.google.common.collect.Iterables.class
             .getProtectionDomain().getCodeSource().getLocation().getFile();
+    jarFile="/home/edward/.m2/repository/com/google/guava/guava/r09/guava-r09.jar";
     client.execute("add jar "+jarFile);
-
+    /*
+    jarFile=org.apache.cassandra.utils.Hex.class
+            .getProtectionDomain().getCodeSource().getLocation().getFile();
+    client.execute("add jar "+jarFile);
+*/
     client.execute("CREATE TEMPORARY FUNCTION udfdelete "+
             " AS 'com.jointhegrid.hivecasudfs.UDFDelete'");
     client.execute("select user, "+
              "udfdelete('test cluster','localhost:9154','udfdelete','udfdelete',user) from atest");
 
+    //client.execute("select user from atest");
     ColumnFamilyResult < String,String> looking = data.queryColumns("john");
     Assert.assertEquals(false,looking.hasResults());
 

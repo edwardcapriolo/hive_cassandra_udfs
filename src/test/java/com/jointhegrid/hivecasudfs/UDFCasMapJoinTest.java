@@ -19,6 +19,8 @@ import com.jointhegrid.hive_test.HiveTestService;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import me.prettyprint.cassandra.serializers.ByteBufferSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
@@ -32,6 +34,7 @@ import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import org.apache.cassandra.contrib.utils.service.CassandraServiceDataCleaner;
 import org.apache.cassandra.service.EmbeddedCassandraService;
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.service.HiveServerException;
@@ -44,7 +47,7 @@ public class UDFCasMapJoinTest extends HiveTestService {
 
   static EmbeddedCassandraService ecs;
   static Cluster cluster;
-  static ColumnFamilyTemplate<String, String> data;
+  static ColumnFamilyTemplate<ByteBuffer, ByteBuffer> data;
   static Keyspace ksp;
 
   public UDFCasMapJoinTest() throws IOException {
@@ -64,17 +67,17 @@ public class UDFCasMapJoinTest extends HiveTestService {
     KeyspaceDefinition ksDef = HFactory.createKeyspaceDefinition("udfmj");
     ColumnFamilyDefinition cfBak =
             HFactory.createColumnFamilyDefinition("udfmj", "udfmj",
-            ComparatorType.UTF8TYPE);
+            ComparatorType.BYTESTYPE);
 
     cluster.addKeyspace(ksDef);
     cluster.addColumnFamily(cfBak);
 
     ksp = HFactory.createKeyspace("udfmj", cluster);
     data =
-            new ThriftColumnFamilyTemplate<String, String>(ksp,
+            new ThriftColumnFamilyTemplate<ByteBuffer, ByteBuffer>(ksp,
             "udfmj",
-            StringSerializer.get(),
-            StringSerializer.get());
+            ByteBufferSerializer.get(),
+            ByteBufferSerializer.get());
 
   }
 
@@ -82,16 +85,17 @@ public class UDFCasMapJoinTest extends HiveTestService {
   public void testSingleThread() throws InterruptedException,
           IOException, HiveServerException, TException {
 
-    ColumnFamilyUpdater<String, String> dataUpdater = data.createUpdater("bob");
-    dataUpdater.setString("lname", "smith");
+    ColumnFamilyUpdater<ByteBuffer, ByteBuffer> dataUpdater
+            = data.createUpdater(ByteBufferUtil.bytes("bob"));
+    dataUpdater.setByteBuffer(ByteBufferUtil.bytes("lname"),ByteBufferUtil.bytes("smith") );
     data.update(dataUpdater);
 
-    dataUpdater = data.createUpdater("john");
-    dataUpdater.setString("lname", "doloop");
+    dataUpdater = data.createUpdater(ByteBufferUtil.bytes("john"));
+    dataUpdater.setByteBuffer(ByteBufferUtil.bytes("lname"), ByteBufferUtil.bytes("doloop"));
     data.update(dataUpdater);
 
-    dataUpdater = data.createUpdater("sara");
-    dataUpdater.setString("lname", "connor");
+    dataUpdater = data.createUpdater(ByteBufferUtil.bytes("sara"));
+    dataUpdater.setByteBuffer(ByteBufferUtil.bytes("lname"), ByteBufferUtil.bytes("connor"));
     data.update(dataUpdater);
 
     Path p = new Path(this.ROOT_DIR, "afile");
@@ -120,16 +124,23 @@ public class UDFCasMapJoinTest extends HiveTestService {
     jarFile=com.google.common.collect.Iterables.class
             .getProtectionDomain().getCodeSource().getLocation().getFile();
     client.execute("add jar "+jarFile);
+    jarFile= org.apache.cassandra.utils.ByteBufferUtil.class
+            .getProtectionDomain().getCodeSource().getLocation().getFile();
+    client.execute("add jar "+jarFile);
+    jarFile= org.apache.commons.lang.ArrayUtils.class.
+            getProtectionDomain().getCodeSource().getLocation().getFile();
+    client.execute("add jar "+jarFile);
 
     client.execute("CREATE TEMPORARY FUNCTION udfcasmapjoin "+
             " AS 'com.jointhegrid.hivecasudfs.UDFCasMapJoin'");
+    //constant as string yuk
     client.execute("select user, age, "+
-             "udfcasmapjoin('test cluster','localhost:9154','udfmj','udfmj',user,'lname') as last_name from mjtest");
+             "udfcasmapjoin('test cluster','localhost:9154','udfmj','udfmj', "
+             + "CAST(user as binary),  CAST( CONCAT(substring(user,0,0),'lname') as binary)  ) as last_name from mjtest");
     String row = client.fetchOne();
     assertEquals("john\t34\tdoloop", row);
     //client.execute("drop table atest");
 
     
-
   }
 }

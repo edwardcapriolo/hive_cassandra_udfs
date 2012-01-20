@@ -13,17 +13,34 @@
     <dependency>
       <groupId>com.jointhegrid</groupId>
       <artifactId>hive_test</artifactId>
-      <version>2.0.0-SNAPSHOT</version>
+      <version>3.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.cassandra</groupId>
       <artifactId>cassandra-all</artifactId>
-      <version>1.0.5</version>
+      <version>1.1-dev-SNAPSHOT</version>
+  <!--
+  <exclusions>
+        <exclusion>
+          <groupId>org.apache.thrift</groupId>
+          <artifactId>libthrift</artifactId>
+        </exclusion>
+      </exclusions>
+-->
     </dependency>
+
+    <!-- why is this not in Cassandra-all? -->
+    <dependency>
+    <groupId>edu.stanford.ppl</groupId>
+    <artifactId>snaptree</artifactId>
+    <version>0.1</version>
+  </dependency>
+
+
     <dependency>
       <groupId>me.prettyprint</groupId>
       <artifactId>hector-core</artifactId>
-      <version>1.0-1</version>
+      <version>1.0-3-SNAPSHOT-1.1-ec</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -83,10 +100,12 @@
       </plugins>
     </pluginManagement>
   </build>
+  <!--
   <repositories>
     <repository>
       <id>riptano</id>
       <url>http://mvn.riptano.com/content/repositories/snapshots</url>
     </repository>
   </repositories>
+  -->
 </project>

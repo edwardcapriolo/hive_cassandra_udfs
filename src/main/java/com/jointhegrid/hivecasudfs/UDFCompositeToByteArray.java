@@ -30,6 +30,10 @@ public class UDFCompositeToByteArray extends GenericUDF{
   public Object evaluate(DeferredObject[] arguments) throws HiveException {
     BytesWritable columnAsBinary = ((BinaryObjectInspector) argumentOI[0])
             .getPrimitiveWritableObject(arguments[0].get());
+    return evalInternal(columnAsBinary);
+  }
+
+  public List<byte[]> evalInternal ( BytesWritable columnAsBinary ){
     byte [] rk = new byte [columnAsBinary.getLength()];
     for (int i =0;i<rk.length;i++){
       rk[i]=columnAsBinary.getBytes()[i];
@@ -37,7 +41,7 @@ public class UDFCompositeToByteArray extends GenericUDF{
     List<byte[]> res = CompositeTool.readComposite(rk);
     return res;
   }
-
+  
   @Override
   public String getDisplayString(String[] strings) {
     return "Cassandra rocks";
